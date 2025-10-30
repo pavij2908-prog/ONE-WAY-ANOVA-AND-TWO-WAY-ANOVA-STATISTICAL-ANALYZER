@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -49,7 +48,7 @@ def decision_explanation(p_val):
 # Streamlit Layout
 # -----------------------
 st.set_page_config(page_title="ANOVA Statistical App", layout="wide")
-st.title("📊 One-Way & Two-Way ANOVA ")
+st.title("📊 One-Way & Two-Way ANOVA")
 
 # -----------------------
 # 1️⃣ Data Input
@@ -109,7 +108,7 @@ if data is not None:
     selected_anova = st.selectbox("Choose ANOVA Type", ["One-Way ANOVA", "Two-Way ANOVA"])
     
     # -----------------------
-    # One-Way ANOVA
+    # One-Way ANOVA Section
     # -----------------------
     if selected_anova == "One-Way ANOVA":
         cat_col = st.selectbox("Select Categorical Column", cat_columns)
@@ -118,9 +117,6 @@ if data is not None:
         if st.button("Run One-Way ANOVA"):
             f_stat, p_val = perform_one_way_anova(data, cat_col, num_col)
             
-            # -----------------------
-            # Hypothesis Detailed Explanation
-            # -----------------------
             st.subheader("📌 Hypothesis Explanation (Detailed)")
             st.markdown(f"""
 **1️⃣ Null Hypothesis (H0):**  
@@ -138,14 +134,10 @@ ANOVA compares **variance between groups** vs **variance within groups**.
 Based on the calculated p-value, we make a final decision.
 """)
             
-            # -----------------------
-            # Results
-            # -----------------------
             st.subheader("📈 ANOVA Results")
             st.write(f"**F-Value:** {f_stat:.4f}")
             st.write(f"**P-Value:** {p_val:.4f}")
             
-            # Final decision explanation
             decision = decision_explanation(p_val)
             st.markdown(f"**Final Decision:** {decision}")
             if "Reject" in decision:
@@ -153,9 +145,6 @@ Based on the calculated p-value, we make a final decision.
             else:
                 st.info("ℹ️ Null Hypothesis Accepted")
             
-            # -----------------------
-            # Visualizations
-            # -----------------------
             st.subheader("📊 Visualizations")
             fig, ax = plt.subplots(1, 2, figsize=(12,5))
             sns.boxplot(x=cat_col, y=num_col, data=data, ax=ax[0])
@@ -164,7 +153,6 @@ Based on the calculated p-value, we make a final decision.
             ax[1].set_title("Violin Plot")
             st.pyplot(fig)
             
-            # Save Output & Figure
             output_df = pd.DataFrame({
                 "Categorical Column": [cat_col],
                 "Numerical Column": [num_col],
@@ -174,9 +162,28 @@ Based on the calculated p-value, we make a final decision.
             })
             save_output(output_df, filename="one_way_anova_output.csv")
             save_figure(fig, filename="one_way_anova_plot.png")
-    
+
+            # -----------------------
+            # Download Buttons for One-Way ANOVA
+            # -----------------------
+            st.subheader("⬇️ Download Results")
+            st.download_button(
+                label="📥 Download ANOVA Output (CSV)",
+                data=output_df.to_csv(index=False),
+                file_name="one_way_anova_output.csv",
+                mime="text/csv"
+            )
+
+            with open("ANOVA_Results/one_way_anova_plot.png", "rb") as file:
+                st.download_button(
+                    label="📥 Download ANOVA Plot (PNG)",
+                    data=file,
+                    file_name="one_way_anova_plot.png",
+                    mime="image/png"
+                )
+
     # -----------------------
-    # Two-Way ANOVA
+    # Two-Way ANOVA Section
     # -----------------------
     elif selected_anova == "Two-Way ANOVA":
         cat_col1 = st.selectbox("Select First Categorical Column", cat_columns, key="cat1")
@@ -186,9 +193,6 @@ Based on the calculated p-value, we make a final decision.
         if st.button("Run Two-Way ANOVA"):
             anova_table = perform_two_way_anova(data, cat_col1, cat_col2, num_col2)
             
-            # -----------------------
-            # Hypothesis Detailed Explanation
-            # -----------------------
             st.subheader("📌 Hypothesis Explanation (Detailed)")
             st.markdown(f"""
 **1️⃣ Null Hypotheses (H0):**  
@@ -208,31 +212,5 @@ Two-Way ANOVA examines two factors simultaneously.
 Check p-values for each term to decide whether to reject or accept H0.
 """)
             
-            # -----------------------
-            # Results with Decision
-            # -----------------------
             st.subheader("📈 ANOVA Table")
-            anova_table_sorted = anova_table.sort_values("F", ascending=False)
-            st.dataframe(anova_table_sorted)
-            
-            # Add decision column
-            decision_list = []
-            for pv in anova_table_sorted['PR(>F)']:
-                decision_list.append(decision_explanation(pv))
-            anova_table_sorted['Decision'] = decision_list
-            
-            st.subheader("📌 Final Decision for Each Term")
-            st.dataframe(anova_table_sorted)
-            
-            # -----------------------
-            # Visualization
-            # -----------------------
-            st.subheader("📊 Visualization")
-            fig, ax = plt.subplots(figsize=(8,6))
-            sns.boxplot(x=cat_col1, y=num_col2, hue=cat_col2, data=data, ax=ax)
-            ax.set_title("Two-Way ANOVA Boxplot")
-            st.pyplot(fig)
-            
-            # Save Output & Figure
-            save_output(anova_table_sorted, filename="two_way_anova_output.csv")
-            save_figure(fig, filename="two_way_anova_plot.png")   
+            anova_table_sorted = anova
