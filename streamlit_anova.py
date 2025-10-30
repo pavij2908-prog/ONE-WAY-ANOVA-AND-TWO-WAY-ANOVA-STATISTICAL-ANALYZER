@@ -8,10 +8,6 @@ import os
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 
-# -----------------------
-# Helper Functions
-# -----------------------
-
 def perform_one_way_anova(data, cat_col, num_col):
     groups = [group[num_col].dropna().values for name, group in data.groupby(cat_col)]
     f_stat, p_val = stats.f_oneway(*groups)
@@ -44,15 +40,9 @@ def decision_explanation(p_val):
     else:
         return "Fail to reject Null Hypothesis (H0) → No significant differences"
 
-# -----------------------
-# Streamlit Layout
-# -----------------------
 st.set_page_config(page_title="ANOVA Statistical App", layout="wide")
-st.title("📊 One-Way & Two-Way ANOVA")
+st.title("📊 One-Way & Two-Way ANOVA ")
 
-# -----------------------
-# 1️⃣ Data Input
-# -----------------------
 st.header("1️⃣ Data Input")
 input_method = st.radio("Choose Input Method", ["Upload CSV", "Manual Input"])
 
@@ -87,9 +77,6 @@ elif input_method == "Manual Input":
         st.subheader("Manual Input Data Preview")
         st.dataframe(data)
 
-# -----------------------
-# 2️⃣ ANOVA Selection & Column Selection
-# -----------------------
 if data is not None:
     st.header("2️⃣ Select Columns for ANOVA")
     
@@ -107,9 +94,6 @@ if data is not None:
     
     selected_anova = st.selectbox("Choose ANOVA Type", ["One-Way ANOVA", "Two-Way ANOVA"])
     
-    # -----------------------
-    # One-Way ANOVA Section
-    # -----------------------
     if selected_anova == "One-Way ANOVA":
         cat_col = st.selectbox("Select Categorical Column", cat_columns)
         num_col = st.selectbox("Select Numerical Column", num_columns)
@@ -162,29 +146,7 @@ Based on the calculated p-value, we make a final decision.
             })
             save_output(output_df, filename="one_way_anova_output.csv")
             save_figure(fig, filename="one_way_anova_plot.png")
-
-            # -----------------------
-            # Download Buttons for One-Way ANOVA
-            # -----------------------
-            st.subheader("⬇️ Download Results")
-            st.download_button(
-                label="📥 Download ANOVA Output (CSV)",
-                data=output_df.to_csv(index=False),
-                file_name="one_way_anova_output.csv",
-                mime="text/csv"
-            )
-
-            with open("ANOVA_Results/one_way_anova_plot.png", "rb") as file:
-                st.download_button(
-                    label="📥 Download ANOVA Plot (PNG)",
-                    data=file,
-                    file_name="one_way_anova_plot.png",
-                    mime="image/png"
-                )
-
-    # -----------------------
-    # Two-Way ANOVA Section
-    # -----------------------
+    
     elif selected_anova == "Two-Way ANOVA":
         cat_col1 = st.selectbox("Select First Categorical Column", cat_columns, key="cat1")
         cat_col2 = st.selectbox("Select Second Categorical Column", cat_columns, key="cat2")
@@ -213,4 +175,23 @@ Check p-values for each term to decide whether to reject or accept H0.
 """)
             
             st.subheader("📈 ANOVA Table")
-            anova_table_sorted = anova
+            anova_table_sorted = anova_table.sort_values("F", ascending=False)
+            st.dataframe(anova_table_sorted)
+            
+            decision_list = []
+            for pv in anova_table_sorted['PR(>F)']:
+                decision_list.append(decision_explanation(pv))
+            anova_table_sorted['Decision'] = decision_list
+            
+            st.subheader("📌 Final Decision for Each Term")
+            st.dataframe(anova_table_sorted)
+            
+            st.subheader("📊 Visualization")
+            fig, ax = plt.subplots(figsize=(8,6))
+            sns.boxplot(x=cat_col1, y=num_col2, hue=cat_col2, data=data, ax=ax)
+            ax.set_title("Two-Way ANOVA Boxplot")
+            st.pyplot(fig)
+            
+            save_output(anova_table_sorted, filename="two_way_anova_output.csv")
+            save_figure(fig, filename="two_way_anova_plot.png")
+
